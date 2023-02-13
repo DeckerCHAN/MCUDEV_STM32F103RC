@@ -20,6 +20,7 @@
 #include "main.h"
 #include "spi.h"
 #include "gpio.h"
+#include "nrf24_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -87,21 +88,26 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-    HAL_Delay(1000);
+    HAL_Delay(5000);
+
+    NRF24_TypeDef nrf24 = {};
+    nrf24.spi = &hspi1;
+    nrf24.CE_PinPort = NRF_CE_GPIO_Port;
+    nrf24.CE_Pin = NRF_CE_Pin;
+    nrf24.CS_PinPort = SPI1_CS_NRF_GPIO_Port;
+    nrf24.CS_Pin = SPI1_CS_NRF_Pin;
 
 
 
+    //Start Device into standby-I mode
+    NRF24_WriteSingleByteReg(&nrf24, NRF24_REG_CONFIG, NRF24_ReadSingleByteReg(&nrf24, NRF24_REG_CONFIG) | 0b00000010);
+    NRF24_WriteSingleByteReg(&nrf24, NRF24_REG_CONFIG, NRF24_ReadSingleByteReg(&nrf24, NRF24_REG_CONFIG) | 0b00001000);
 
-    HAL_GPIO_WritePin(SPI1_CS_ROM_GPIO_Port, SPI1_CS_ROM_Pin, GPIO_PIN_RESET);
-    HAL_SPI_Transmit(&hspi1, (uint8_t []){0x9F,}, 1  , HAL_MAX_DELAY );
-    while (HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY);
+    //Disable re-transmit
+    NRF24_WriteSingleByteReg(&nrf24, NRF24_REG_SETUP_RETR, 0b00000000);
 
-    uint8_t dataRx[10] = {};
-
-    HAL_SPI_Receive(&hspi1, dataRx, 5  , HAL_MAX_DELAY );
-    while (HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY);
-    HAL_GPIO_WritePin(SPI1_CS_ROM_GPIO_Port, SPI1_CS_ROM_Pin, GPIO_PIN_SET);
-    while (HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY);
+    //Enable W_TX_PAYLOAD_NOACK feature
+    NRF24_WriteSingleByteReg(&nrf24, NRF24_REG_FEATURE,   NRF24_ReadSingleByteReg(&nrf24, NRF24_REG_FEATURE) | 0b00000001);
 
   /* USER CODE END 2 */
 
@@ -112,14 +118,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
       HAL_Delay(1000);
+      HAL_GPIO_WritePin(LED0_GPIO_Port, LED0_Pin, GPIO_PIN_RESET);
 
+      NRF24_BroadcastBytesToAddress(&nrf24, (uint8_t [] ) {0xBA, 0xBA,0xBA,0xBA,0x01},(uint8_t [] ) {0x01, 0x23,0x45,0x67,0x89},5);
 
-      HAL_GPIO_TogglePin(LED0_GPIO_Port, LED0_Pin);
-
-
-
-
+      HAL_GPIO_WritePin(LED0_GPIO_Port, LED0_Pin, GPIO_PIN_SET);
   }
   /* USER CODE END 3 */
 }
