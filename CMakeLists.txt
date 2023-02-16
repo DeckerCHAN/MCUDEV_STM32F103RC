@@ -46,7 +46,6 @@ elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "MinSizeRel")
     add_compile_options(-Os)
 else ()
     message(STATUS "Minimal optimization, debug info included")
-    #Use -O0 -g to disable optimized out
     add_compile_options(-O0 -g)
 endif ()
 

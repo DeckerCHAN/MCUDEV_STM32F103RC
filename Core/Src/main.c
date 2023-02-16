@@ -20,10 +20,10 @@
 #include "main.h"
 #include "spi.h"
 #include "gpio.h"
-#include "nrf24_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "nrf24_hal.h"
 
 /* USER CODE END Includes */
 
@@ -88,7 +88,7 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-    HAL_Delay(5000);
+    HAL_Delay(1000);
 
     NRF24_TypeDef nrf24 = {};
     nrf24.spi = &hspi1;
@@ -98,6 +98,12 @@ int main(void)
     nrf24.CS_Pin = SPI1_CS_NRF_Pin;
 
 
+    if (NRF24_CheckAvailable(&nrf24) == NRF24_ERROR){
+        while (1){
+            HAL_Delay(200);
+            HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+        }
+    }
 
     //Start Device into standby-I mode
     NRF24_WriteSingleByteReg(&nrf24, NRF24_REG_CONFIG, NRF24_ReadSingleByteReg(&nrf24, NRF24_REG_CONFIG) | 0b00000010);
@@ -106,8 +112,15 @@ int main(void)
     //Disable re-transmit
     NRF24_WriteSingleByteReg(&nrf24, NRF24_REG_SETUP_RETR, 0b00000000);
 
+    //Disable AA
+    NRF24_WriteSingleByteReg(&nrf24, NRF24_REG_ENAA, 0b00000000);
+
+
     //Enable W_TX_PAYLOAD_NOACK feature
     NRF24_WriteSingleByteReg(&nrf24, NRF24_REG_FEATURE,   NRF24_ReadSingleByteReg(&nrf24, NRF24_REG_FEATURE) | 0b00000001);
+
+    //Slow to 250kbps
+    NRF24_WriteSingleByteReg(&nrf24, NRF24_REG_RF_SETUP , 0b00100110);
 
   /* USER CODE END 2 */
 
@@ -119,12 +132,33 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-      HAL_Delay(1000);
       HAL_GPIO_WritePin(LED0_GPIO_Port, LED0_Pin, GPIO_PIN_RESET);
 
       NRF24_BroadcastBytesToAddress(&nrf24, (uint8_t [] ) {0xBA, 0xBA,0xBA,0xBA,0x01},(uint8_t [] ) {0x01, 0x23,0x45,0x67,0x89},5);
 
       HAL_GPIO_WritePin(LED0_GPIO_Port, LED0_Pin, GPIO_PIN_SET);
+      HAL_Delay(50);
+//
+//      if (NRF24_CheckAvailable(&nrf24) == NRF24_ERROR){
+//          while (1){
+//              HAL_Delay(200);
+//              HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+//          }
+//      }
+//
+//      HAL_Delay(20);
+//      for (int i = 0; i <= 0x17; ++i) {
+//          NRF24_ReadSingleByteReg(&nrf24, i);
+//      }
+//
+//      NRF24_ReadMultiByteReg(&nrf24, NRF24_REG_RX_ADDR_P1, 5 , (uint8_t []) {0x00,0x00,0x00,0x00,0x00} );
+//      NRF24_ReadMultiByteReg(&nrf24, NRF24_REG_TX_ADDR, 5 , (uint8_t []) {0x00,0x00,0x00,0x00,0x00} );
+//      NRF24_ReadMultiByteReg(&nrf24, NRF24_REG_DYNPD, 1 , (uint8_t []) {0x00,0x00,0x00,0x00,0x00} );
+//      NRF24_ReadMultiByteReg(&nrf24, NRF24_REG_FEATURE, 1 , (uint8_t []) {0x00,0x00,0x00,0x00,0x00} );
+//
+//      HAL_Delay(500);
+
+
   }
   /* USER CODE END 3 */
 }
@@ -183,6 +217,7 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+
   }
   /* USER CODE END Error_Handler_Debug */
 }
