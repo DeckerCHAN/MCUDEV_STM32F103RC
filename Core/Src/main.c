@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "spi.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -85,23 +84,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-    HAL_Delay(1000);
-
-
-
-
-    HAL_GPIO_WritePin(SPI1_CS_ROM_GPIO_Port, SPI1_CS_ROM_Pin, GPIO_PIN_RESET);
-    HAL_SPI_Transmit(&hspi1, (uint8_t []){0x9F,}, 1  , HAL_MAX_DELAY );
-    while (HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY);
-
-    uint8_t dataRx[10] = {};
-
-    HAL_SPI_Receive(&hspi1, dataRx, 5  , HAL_MAX_DELAY );
-    while (HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY);
-    HAL_GPIO_WritePin(SPI1_CS_ROM_GPIO_Port, SPI1_CS_ROM_Pin, GPIO_PIN_SET);
-    while (HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY);
 
   /* USER CODE END 2 */
 
@@ -112,14 +95,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-      HAL_Delay(1000);
-
-
-      HAL_GPIO_TogglePin(LED0_GPIO_Port, LED0_Pin);
-
-
-
-
   }
   /* USER CODE END 3 */
 }
